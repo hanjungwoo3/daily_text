@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">daily text 앱</string>
+    <string name="widget_description">매일의 말씀과 해설을 보여주는 데일리 텍스트 위젯입니다.</string>
+    <string name="widget_instruction">&lt;, &gt; 버튼으로 날짜를 이동하며 오늘의 말씀을 확인하세요!</string>
+</resources> 

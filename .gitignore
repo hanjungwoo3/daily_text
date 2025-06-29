@@ -1,0 +1,56 @@
+# macOS, 시스템, 에디터, 개발환경, 빌드 캐시 등 무시
+.DS_Store
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*.log
+*.tmp
+*.bak
+*.lock
+*.pyc
+__pycache__/
+
+# 홈 디렉토리 환경설정/캐시/임시/시스템 파일 무시
+.zsh*
+.zcompdump*
+.zshrc*
+.zsh_history
+.zsh_sessions/
+.ssh/
+.nvm/
+.npm/
+.npmrc
+.gradle/
+.lesshst
+.local/
+.cups/
+.cursor/
+.emulator_console_auth_token
+.viminfo
+.wdm/
+.n8n/
+.ssh/
+
+# 사용자 폴더 무시
+Applications/
+Desktop/
+Documents/
+Downloads/
+Library/
+Movies/
+Music/
+Pictures/
+Public/
+
+# 기타 빌드/이미지/임시 폴더 무시
+Twrp-*.img
+chrome-automation-profile/
+karabiner/
+memo/
+sub/
+python/
+sg-dist-ec/
+dev-qa-dist/
+playwright-mcp-docker/ 

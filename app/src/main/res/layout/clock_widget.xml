@@ -81,23 +81,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="제목 - 성구"
-                android:textSize="15sp"
+        android:textSize="15sp"
                 android:textStyle="normal"
-                android:textColor="@color/widget_text_primary"
+        android:textColor="@color/widget_text_primary"
                 android:gravity="center"
                 android:layout_marginBottom="0dp"
                 android:padding="8dp"
                 android:background="#4D388E3C" />
 
             <!-- 본문 -->
-            <TextView
-                android:id="@+id/widget_body"
-                android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/widget_body"
+        android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:text="오늘의 해설"
+        android:text="오늘의 해설"
                 android:textSize="14sp"
-                android:textColor="@color/widget_text_secondary"
+        android:textColor="@color/widget_text_secondary"
                 android:gravity="fill_horizontal" />
 
         </LinearLayout>

@@ -60,14 +60,17 @@ for i in range(1, len(splits)-2, 3):
     # 참고문헌 줄도 본문에 추가
     if last_ref:
         body_text += '\n' + last_ref
+    # body_text에서 줄바꿈(\n) 문자를 모두 공백으로 대체
+    body_text = body_text.replace('\n', ' ')
+    # 닫는 괄호 뒤에 줄바꿈 추가 (이미 줄바꿈이 없을 때만)
+    body_text = re.sub(r'\)(?!\s*\n)', ')\n', body_text)
     # 날짜 포맷 MM-DD
     date_str = f"{month:02d}-{day:02d}"
     verses.append({
         "date": date_str,
         "title": title,
         "reference": reference,
-        "body": body_text,
-        "footer": last_ref
+        "body": body_text
     })
 
 # JSON 저장

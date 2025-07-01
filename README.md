@@ -55,3 +55,17 @@ app/build/outputs/apk/debug/daily_text.apk
 ## 스크린샷
 
 ![앱 스크린샷](screenshot/daily_text.png)
+
+## 데이터 업데이트 방법 (PDF → TXT → JSON)
+
+1. jw.org에서 연감(Yearbook) PDF 파일을 다운로드합니다.
+2. PDF에서 필요한 날짜별 본문을 복사해 텍스트 파일(예: verses_6_12.txt)로 저장합니다.
+3. 저장소의 parse_verses_to_json.py 스크립트를 실행해 JSON 파일을 생성합니다.
+   ```bash
+   python parse_verses_to_json.py
+   ```
+   - 입력: verses_6_12.txt
+   - 출력: app/src/main/assets/daily_verses_2025.json
+4. 앱을 빌드하면 새 JSON 데이터가 적용됩니다.
+
+> PDF → TXT 변환은 PDF 뷰어에서 복사/붙여넣기 또는 온라인 변환 도구를 활용할 수 있습니다.

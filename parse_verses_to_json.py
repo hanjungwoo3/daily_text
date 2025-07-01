@@ -57,6 +57,9 @@ for i in range(1, len(splits)-2, 3):
     # 성구와 본문 사이에 한 줄만 추가
     if reference and body_text:
         body_text = '\n' + body_text
+    # 참고문헌 줄도 본문에 추가
+    if last_ref:
+        body_text += '\n' + last_ref
     # 날짜 포맷 MM-DD
     date_str = f"{month:02d}-{day:02d}"
     verses.append({

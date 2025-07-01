@@ -39,9 +39,9 @@ MIT License
 
 생성된 APK 파일은 다음 경로에 있습니다:
 
-```
-app/build/outputs/apk/debug/daily_text.apk
-```
+최신 APK 파일은 아래 Release 페이지에서 다운로드할 수 있습니다:
+
+[👉 Release에서 APK 다운로드](https://github.com/hanjungwoo3/daily_text/releases)
 
 이제 이 APK를 기기나 에뮬레이터에 설치하면,
 - 앱 이름이 "daily text 앱"으로 표시되고,

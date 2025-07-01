@@ -58,9 +58,6 @@ for i in range(1, len(splits)-2, 3):
     body_text = re.sub(r'\)(?! )', ') ', body_text)
     # 여러 연속 공백을 하나로 치환
     body_text = re.sub(r'\s+', ' ', body_text)
-    # 성구와 본문 사이에 한 줄만 추가
-    if reference and body_text:
-        body_text = '\n' + body_text
     # 참고문헌 줄도 본문에 추가
     if last_ref:
         body_text += '\n' + last_ref

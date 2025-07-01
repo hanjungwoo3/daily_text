@@ -53,7 +53,9 @@ for i in range(1, len(splits)-2, 3):
             body_end_idx = idx
             break
     # 본문: 줄바꿈 없이 한 줄로
-    body_text = ' '.join([l.strip() for l in lines[body_start_idx:body_end_idx] if l.strip()])
+    body_text = ''.join([l.strip() for l in lines[body_start_idx:body_end_idx] if l.strip()])
+    # 여러 연속 공백을 하나로 치환
+    body_text = re.sub(r'\s+', ' ', body_text)
     # 성구와 본문 사이에 한 줄만 추가
     if reference and body_text:
         body_text = '\n' + body_text

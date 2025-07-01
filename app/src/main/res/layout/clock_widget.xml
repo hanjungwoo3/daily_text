@@ -5,7 +5,10 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:paddingTop="2dp"
+    android:paddingBottom="8dp"
     android:gravity="fill">
 
     <!-- 날짜 및 이동 버튼 -->
@@ -22,7 +25,7 @@
             android:text="&lt;"
             android:minWidth="48dp"
             android:minHeight="0dp"
-            android:padding="8dp"
+            android:padding="4dp"
             android:layout_weight="0"
             android:background="@android:color/transparent"
             android:textSize="18sp"
@@ -33,10 +36,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="2025년 6월 29일 일요일"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textStyle="normal"
             android:gravity="center"
-            android:textColor="@color/widget_text_primary" />
+            android:textColor="@color/widget_text_primary"
+            android:padding="0dp" />
+
+        <TextView
+            android:id="@+id/widget_jw_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="jw.org"
+            android:textSize="14sp"
+            android:textColor="#2196F3"
+            android:gravity="center"
+            android:layout_marginStart="8dp" />
 
         <Button
             android:id="@+id/widget_next_btn"
@@ -45,42 +59,48 @@
             android:text="&gt;"
             android:minWidth="48dp"
             android:minHeight="0dp"
-            android:padding="8dp"
+            android:padding="4dp"
             android:layout_weight="0"
             android:background="@android:color/transparent"
             android:textSize="18sp"
             android:textColor="@color/widget_text_primary" />
-    </LinearLayout>
-
-    <ScrollView
+    </LinearLayout><ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:scrollbars="vertical">
 
-        <TextView
-            android:id="@+id/widget_body"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="오늘의 해설"
-            android:textSize="15sp"
-            android:textColor="@color/widget_text_secondary"
-            android:maxLines="100"
-            android:ellipsize="end"
-            android:gravity="fill_horizontal" />
-    </ScrollView>
+            android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/widget_link"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="날마다 성경을 검토함—2025"
-        android:textSize="14sp"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+            <!-- 제목 -->
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="제목 - 성구"
+                android:textSize="15sp"
+                android:textStyle="normal"
+                android:textColor="@color/widget_text_primary"
+                android:gravity="center"
+                android:layout_marginBottom="0dp"
+                android:padding="2dp" />
+
+            <!-- 본문 -->
+            <TextView
+                android:id="@+id/widget_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="오늘의 해설"
+                android:textSize="14sp"
+                android:textColor="@color/widget_text_secondary"
+                android:maxLines="100"
+                android:ellipsize="end"
+                android:gravity="fill_horizontal" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout> 

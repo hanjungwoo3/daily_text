@@ -104,12 +104,12 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
 
             val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, dateStr)
             val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw
-            val bodyWithLineBreaks = verseBodyRaw.replace("\r\n", "\n").replace("\r", "\n")
-            val mergedText = titleLine + "\n" + bodyWithLineBreaks
+            val bodyWithLineBreaks = verseBodyRaw.replace("\r\n", "\n").replace("\r", "\n").trimStart('\n')
             val dateLabel = getDateLabel(dateStr)
 
             val views = RemoteViews(context.packageName, R.layout.clock_widget)
-            views.setTextViewText(R.id.widget_body, mergedText)
+            views.setTextViewText(R.id.widget_title, titleLine)
+            views.setTextViewText(R.id.widget_body, bodyWithLineBreaks)
             views.setTextViewText(R.id.widget_date, dateLabel)
 
             // < 버튼
@@ -145,14 +145,12 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             // 링크 텍스트 및 URL 생성
             val (year, month, day) = listOf(2025, dateStr.substring(0,2).toInt(), dateStr.substring(3,5).toInt())
             val linkUrl = "https://wol.jw.org/ko/wol/h/r8/lp-ko/$year/$month/$day"
-            val linkText = "날마다 성경을 검토함—2025"
-            views.setTextViewText(R.id.widget_link, linkText)
-            // 링크 클릭 시 브라우저로 이동
-            val linkIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(linkUrl) }
-            val linkPendingIntent = PendingIntent.getActivity(
-                context, appWidgetId * 10 + 6, linkIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            // jw.org 텍스트에 링크 클릭 이벤트 설정
+            val jwIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(linkUrl) }
+            val jwPendingIntent = PendingIntent.getActivity(
+                context, appWidgetId * 10 + 6, jwIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_link, linkPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_jw_link, jwPendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
@@ -189,8 +187,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         val currentIdx = dateList.indexOf(currentDate).takeIf { it >= 0 } ?: 0
         val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, currentDate)
         val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw
-        val bodyWithLineBreaks = verseBodyRaw.replace("\r\n", "\n").replace("\r", "\n")
-        val mergedText = titleLine + "\n" + bodyWithLineBreaks
+        val bodyWithLineBreaks = verseBodyRaw.replace("\r\n", "\n").replace("\r", "\n").trimStart('\n')
         when (intent.action) {
             ACTION_PREV -> {
                 val prevIdx = if (currentIdx > 0) currentIdx - 1 else 0

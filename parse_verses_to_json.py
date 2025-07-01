@@ -54,6 +54,8 @@ for i in range(1, len(splits)-2, 3):
             break
     # 본문: 줄바꿈 없이 한 줄로
     body_text = ''.join([l.strip() for l in lines[body_start_idx:body_end_idx] if l.strip()])
+    # 닫는 괄호 뒤에 공백이 없으면 하나 추가 (중복 방지)
+    body_text = re.sub(r'\)(?! )', ') ', body_text)
     # 여러 연속 공백을 하나로 치환
     body_text = re.sub(r'\s+', ' ', body_text)
     # 성구와 본문 사이에 한 줄만 추가
@@ -62,10 +64,6 @@ for i in range(1, len(splits)-2, 3):
     # 참고문헌 줄도 본문에 추가
     if last_ref:
         body_text += '\n' + last_ref
-    # body_text에서 줄바꿈(\n) 문자를 모두 공백으로 대체
-    body_text = body_text.replace('\n', ' ')
-    # 닫는 괄호 뒤에 줄바꿈 추가 (이미 줄바꿈이 없을 때만)
-    body_text = re.sub(r'\)(?!\s*\n)', ')\n', body_text)
     # 날짜 포맷 MM-DD
     date_str = f"{month:02d}-{day:02d}"
     verses.append({

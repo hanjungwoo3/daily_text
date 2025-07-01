@@ -47,3 +47,7 @@ app/build/outputs/apk/debug/daily_text.apk
 모든 요청하신 기능이 적용된 위젯을 사용할 수 있습니다.
 
 추가로 확인하거나 수정할 사항이 있으면 언제든 말씀해 주세요! 
+
+## 스크린샷
+
+![앱 스크린샷](screenshot/daily_text.png)

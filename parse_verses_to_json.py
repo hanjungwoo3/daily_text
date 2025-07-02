@@ -1,16 +1,28 @@
 import re
 import json
+import glob
+import zipfile
+import os
 
-# 입력 파일과 출력 파일 경로
-INPUT_FILE = 'verses_6_12.txt'
-OUTPUT_FILE = 'app/src/main/assets/daily_verses_2025.json'
+# 압축파일명과 출력 파일 경로
+ZIP_FILE = 'es25_KO.txt.zip'  # 필요시 변경
+OUTPUT_FILE = 'app/src/main/assets/daily_verses.json'  # 연도와 무관하게 사용
+
+# 압축 해제
+with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
+    zip_ref.extractall('.')
+
+# 압축에서 추출된 txt 파일 목록
+INPUT_FILES = sorted(glob.glob('es25_KO_*.txt'))
 
 # 날짜 패턴 (예: 6월 3일 화요일)
 date_pattern = re.compile(r'([1-9]|1[0-2])월 ([1-9]|[12][0-9]|3[01])일 [일월화수목금토]요일')
 
-# 파일 읽기
-with open(INPUT_FILE, encoding='utf-8') as f:
-    text = f.read()
+# 여러 파일 읽어서 하나의 문자열로 합치기
+text = ''
+for fname in INPUT_FILES:
+    with open(fname, encoding='utf-8') as f:
+        text += f.read() + '\n'
 
 # 날짜별로 split
 splits = date_pattern.split(text)
@@ -62,7 +74,10 @@ for i in range(1, len(splits)-2, 3):
     body_text = re.sub(r'\s+', ' ', body_text)
     # 참고문헌 줄도 본문에 추가
     if last_ref:
-        body_text += '\n' + last_ref
+        if body_text:
+            body_text += '\n' + last_ref
+        else:
+            body_text = last_ref
     # 날짜 포맷 MM-DD
     date_str = f"{month:02d}-{day:02d}"
     verses.append({
@@ -76,4 +91,12 @@ for i in range(1, len(splits)-2, 3):
 with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
     json.dump(verses, f, ensure_ascii=False, indent=2)
 
-print(f"Saved {len(verses)} verses to {OUTPUT_FILE}") 
+# 사용한 txt 파일 자동 삭제
+for fname in INPUT_FILES:
+    try:
+        os.remove(fname)
+    except Exception as e:
+        print(f"Failed to remove {fname}: {e}")
+
+print(f"Saved {len(verses)} verses to {OUTPUT_FILE}")
+print(f"Used txt files deleted: {INPUT_FILES}") 

@@ -69,7 +69,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         private fun getJsonArray(context: Context): JSONArray? {
             return try {
                 val assetManager = context.assets
-                val inputStream: InputStream = assetManager.open("daily_verses_2025.json")
+                val inputStream: InputStream = assetManager.open("daily_verses.json")
                 val jsonStr = inputStream.bufferedReader().use { it.readText() }
                 JSONArray(jsonStr)
             } catch (e: Exception) {

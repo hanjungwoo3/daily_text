@@ -93,12 +93,11 @@
     <TextView
         android:id="@+id/widget_body"
         android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:text="오늘의 해설"
-                android:textSize="14sp"
+        android:textSize="14sp"
         android:textColor="@color/widget_text_secondary"
-                android:gravity="fill_horizontal" />
+        android:gravity="fill_horizontal" />
 
         </LinearLayout>
     </ScrollView>

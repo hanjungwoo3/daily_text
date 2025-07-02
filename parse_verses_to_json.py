@@ -56,6 +56,8 @@ for i in range(1, len(splits)-2, 3):
     body_text = ''.join([l.strip() for l in lines[body_start_idx:body_end_idx] if l.strip()])
     # 닫는 괄호 뒤에 공백이 없으면 하나 추가 (중복 방지)
     body_text = re.sub(r'\)(?! )', ') ', body_text)
+    # 남아 있는 모든 줄바꿈(\n, \r) 문자를 공백으로 치환
+    body_text = body_text.replace('\n', ' ').replace('\r', ' ')
     # 여러 연속 공백을 하나로 치환
     body_text = re.sub(r'\s+', ' ', body_text)
     # 참고문헌 줄도 본문에 추가

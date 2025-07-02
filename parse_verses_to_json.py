@@ -20,7 +20,7 @@ verses = []
 for i in range(1, len(splits)-2, 3):
     month = int(splits[i])
     day = int(splits[i+1])
-    body = splits[i+2].replace('\n', ' ').replace('\r', ' ').strip()
+    body = splits[i+2].strip()
     lines = body.splitlines()
     # 제목(성구)
     title_lines = []

@@ -77,4 +77,4 @@ MIT License
 
 ## 스크린샷
 
-![앱 스크린샷](screenshot/daily_text.png)
+<img src="screenshot/daily_text.png" alt="앱 스크린샷" width="400"/>

@@ -17,7 +17,7 @@
 - parse_verses_to_json.py의 ZIP_FILE 변수에 압축파일명을 지정한 뒤 실행하면,
     1. 압축 해제 →
     2. txt 파일 자동 파싱 →
-    3. JSON 파일 생성(app/src/main/assets/daily_verses_2025.json) →
+    3. JSON 파일 생성(app/src/main/assets/daily_verses.json) →
     4. 사용한 txt 파일 자동 삭제
   까지 한 번에 처리됩니다.
 - PDF 변환, 수동 txt 관리 없이 zip 파일만으로 데이터 갱신이 가능합니다.
@@ -35,11 +35,22 @@
 - Android API 21 이상
 - Target API 34
 
-## 빌드 방법
+## 빌드 및 설치 방법
+
+1. 빌드
 
 ```bash
 ./gradlew assembleDebug
 ```
+
+2. 디바이스에 APK 설치
+
+```bash
+adb install -r app/build/outputs/apk/debug/daily_text.apk
+```
+
+- USB 디버깅이 활성화된 안드로이드 기기를 연결한 후 위 명령어를 실행하면 앱이 설치됩니다.
+- 이미 설치된 경우 `-r` 옵션으로 덮어쓰기 설치가 가능합니다.
 
 ## 테스트
 

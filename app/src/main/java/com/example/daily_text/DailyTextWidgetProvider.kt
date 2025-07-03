@@ -24,9 +24,6 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         private const val ACTION_PREV = "com.example.daily_text.ACTION_PREV"
         private const val ACTION_NEXT = "com.example.daily_text.ACTION_NEXT"
         private const val ACTION_TODAY = "com.example.daily_text.ACTION_TODAY"
-        private const val ACTION_SCROLL_UP = "com.example.daily_text.ACTION_SCROLL_UP"
-        private const val ACTION_SCROLL_DOWN = "com.example.daily_text.ACTION_SCROLL_DOWN"
-        private const val PREF_START_LINE_KEY = "start_line_"
 
         private fun getSavedDate(context: Context, appWidgetId: Int): String? {
             val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, 0)
@@ -38,16 +35,6 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             prefs.edit().putString(PREF_PREFIX_KEY + appWidgetId, date).apply()
         }
 
-        private fun getSavedStartLineIndex(context: Context, appWidgetId: Int): Int {
-            val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, 0)
-            return prefs.getInt(PREF_START_LINE_KEY + appWidgetId, 0)
-        }
-
-        private fun saveStartLineIndex(context: Context, appWidgetId: Int, index: Int) {
-            val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, 0)
-            prefs.edit().putInt(PREF_START_LINE_KEY + appWidgetId, index).apply()
-        }
-
         private fun getTodayDate(): String {
             val calendar = Calendar.getInstance()
             val month = calendar.get(Calendar.MONTH) + 1
@@ -57,7 +44,8 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
 
         private fun getDateLabel(dateStr: String): String {
             // dateStr: MM-DD
-            val year = 2025 // 고정 연도
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
             val month = dateStr.substring(0, 2).toInt()
             val day = dateStr.substring(3, 5).toInt()
             val cal = Calendar.getInstance()
@@ -114,11 +102,10 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             val currentIdx = dateList.indexOf(savedDate).takeIf { it >= 0 } ?: dateList.indexOf(today).takeIf { it >= 0 } ?: 0
             val dateStr = dateList.getOrNull(currentIdx) ?: today
             saveDate(context, appWidgetId, dateStr)
-            if (dateStrParam != null) saveStartLineIndex(context, appWidgetId, 0)
             val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, dateStr)
             val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw
             val dateLabel = getDateLabel(dateStr)
-            val views = RemoteViews(context.packageName, R.layout.clock_widget)
+            val views = RemoteViews(context.packageName, R.layout.daily_text_widget)
             // body 내 (성구) 부분만 이탤릭+어두운 노랑(#FFB300) 처리
             val bodyWithItalic = verseBodyRaw.replace(Regex("\\([^\\)]+\\)")) {
                 "<i><font color=\"#FFB300\">${it.value}</font></i>"
@@ -150,7 +137,10 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 context, appWidgetId * 10 + 5, todayIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_date, todayPendingIntent)
-            val (year, month, day) = listOf(2025, dateStr.substring(0,2).toInt(), dateStr.substring(3,5).toInt())
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = dateStr.substring(0,2).toInt()
+            val day = dateStr.substring(3,5).toInt()
             val linkUrl = "https://wol.jw.org/ko/wol/h/r8/lp-ko/$year/$month/$day"
             val jwIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(linkUrl) }
             val jwPendingIntent = PendingIntent.getActivity(
@@ -188,23 +178,6 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
         if (appWidgetId == -1) return
         when (intent.action) {
-            ACTION_SCROLL_UP -> {
-                val startLine = getSavedStartLineIndex(context, appWidgetId)
-                val newIndex = if (startLine - 5 >= 0) startLine - 5 else 0
-                saveStartLineIndex(context, appWidgetId, newIndex)
-                updateAppWidget(context, appWidgetManager, appWidgetId)
-            }
-            ACTION_SCROLL_DOWN -> {
-                val dateList = getDateList(context)
-                val currentDate = getSavedDate(context, appWidgetId) ?: getTodayDate()
-                val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, currentDate)
-                val bodyWithLineBreaks = verseBodyRaw.replace("\r\n", "\n").replace("\r", "\n").trimStart('\n')
-                val lines = bodyWithLineBreaks.split('\n')
-                val startLine = getSavedStartLineIndex(context, appWidgetId)
-                val newIndex = if (startLine + 5 < lines.size) startLine + 5 else startLine
-                saveStartLineIndex(context, appWidgetId, newIndex)
-                updateAppWidget(context, appWidgetManager, appWidgetId)
-            }
             ACTION_PREV -> {
                 val dateList = getDateList(context)
                 val currentDate = getSavedDate(context, appWidgetId) ?: getTodayDate()

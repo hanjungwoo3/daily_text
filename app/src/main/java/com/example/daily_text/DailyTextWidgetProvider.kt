@@ -146,7 +146,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             val jwPendingIntent = PendingIntent.getActivity(
                 context, appWidgetId * 10 + 6, jwIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_jw_link, jwPendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_title, jwPendingIntent)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

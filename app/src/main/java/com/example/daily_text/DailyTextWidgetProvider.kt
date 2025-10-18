@@ -1,5 +1,6 @@
 package com.example.daily_text
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -24,6 +25,8 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         private const val ACTION_PREV = "com.example.daily_text.ACTION_PREV"
         private const val ACTION_NEXT = "com.example.daily_text.ACTION_NEXT"
         private const val ACTION_TODAY = "com.example.daily_text.ACTION_TODAY"
+        private const val ACTION_UPDATE_DAILY = "com.example.daily_text.ACTION_UPDATE_DAILY"
+        private const val TAG = "DailyTextWidget"
 
         private fun getSavedDate(context: Context, appWidgetId: Int): String? {
             val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, 0)
@@ -88,6 +91,70 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 }
             }
             return Triple("일용할 성구를 불러올 수 없습니다.", "", "앱을 다시 실행해 주세요.")
+        }
+
+        /**
+         * 다음 자정에 위젯을 업데이트하도록 알람 설정
+         */
+        fun scheduleMidnightUpdate(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            if (alarmManager == null) {
+                Log.e(TAG, "AlarmManager not available")
+                return
+            }
+
+            val intent = Intent(context, DateChangeBroadcastReceiver::class.java).apply {
+                action = ACTION_UPDATE_DAILY
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // 다음 자정 시간 계산
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            val triggerTime = calendar.timeInMillis
+            Log.d(TAG, "Scheduling midnight update at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
+
+            // Android 6.0 이상에서도 정확한 시간에 실행되도록 설정
+            try {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Failed to schedule exact alarm", e)
+                // 정확한 알람 설정 실패 시 일반 알람으로 fallback
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+            }
+        }
+
+        /**
+         * 알람 취소
+         */
+        fun cancelMidnightUpdate(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val intent = Intent(context, DateChangeBroadcastReceiver::class.java).apply {
+                action = ACTION_UPDATE_DAILY
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager?.cancel(pendingIntent)
+            Log.d(TAG, "Midnight update alarm cancelled")
         }
 
         internal fun updateAppWidget(
@@ -160,16 +227,23 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
+        
+        // 자정 업데이트 알람 설정
+        scheduleMidnightUpdate(context)
     }
 
     override fun onEnabled(context: Context) {
         // 첫 번째 위젯이 생성될 때 호출
         super.onEnabled(context)
+        Log.d(TAG, "Widget enabled - scheduling midnight updates")
+        scheduleMidnightUpdate(context)
     }
 
     override fun onDisabled(context: Context) {
         // 마지막 위젯이 제거될 때 호출
         super.onDisabled(context)
+        Log.d(TAG, "Widget disabled - cancelling midnight updates")
+        cancelMidnightUpdate(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {

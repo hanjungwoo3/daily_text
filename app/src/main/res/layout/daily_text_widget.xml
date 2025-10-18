@@ -70,7 +70,7 @@
                 android:id="@+id/widget_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-        android:textSize="15sp"
+        android:textSize="14sp"
                 android:textStyle="normal"
         android:textColor="@color/widget_text_primary"
                 android:gravity="center"
@@ -84,7 +84,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="오늘의 해설"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textColor="@color/widget_text_secondary"
         android:gravity="fill_horizontal" />
 

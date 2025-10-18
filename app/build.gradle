@@ -11,8 +11,8 @@ android {
         applicationId "com.example.daily_text"
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,12 +32,11 @@ android {
     }
 }
 
-// APK 파일명 변경 (debug 빌드)
+// APK 파일명 변경
 android.applicationVariants.all { variant ->
-    if (variant.buildType.name == "debug") {
-        variant.outputs.all { output ->
-            outputFileName = "daily_text.apk"
-        }
+    variant.outputs.all { output ->
+        def buildType = variant.buildType.name
+        outputFileName = "daily_text-${buildType}.apk"
     }
 }
 

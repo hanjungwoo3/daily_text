@@ -168,6 +168,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             val savedDate = dateStrParam ?: getSavedDate(context, appWidgetId) ?: today
             val currentIdx = dateList.indexOf(savedDate).takeIf { it >= 0 } ?: dateList.indexOf(today).takeIf { it >= 0 } ?: 0
             val dateStr = dateList.getOrNull(currentIdx) ?: today
+            Log.d(TAG, "Updating widget $appWidgetId: today=$today, savedDate=$savedDate, dateStr=$dateStr")
             saveDate(context, appWidgetId, dateStr)
             val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, dateStr)
             val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw

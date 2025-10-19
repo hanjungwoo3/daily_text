@@ -42,12 +42,18 @@ class DateChangeBroadcastReceiver : BroadcastReceiver() {
         
         Log.d(TAG, "Updating ${appWidgetIds.size} widget(s)")
         
+        // 오늘 날짜 계산
+        val calendar = android.icu.util.Calendar.getInstance()
+        val month = calendar.get(android.icu.util.Calendar.MONTH) + 1
+        val day = calendar.get(android.icu.util.Calendar.DAY_OF_MONTH)
+        val todayDate = String.format("%02d-%02d", month, day)
+        
         for (appWidgetId in appWidgetIds) {
             DailyTextWidgetProvider.updateAppWidget(
                 context,
                 appWidgetManager,
                 appWidgetId,
-                dateStrParam = null // 오늘 날짜로 업데이트
+                dateStrParam = todayDate // 무조건 오늘 날짜로 업데이트
             )
         }
     }

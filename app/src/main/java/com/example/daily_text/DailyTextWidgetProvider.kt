@@ -10,6 +10,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import android.widget.RemoteViews
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.InputStream
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
@@ -92,6 +93,42 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 }
             }
             return Triple("일용할 성구를 불러올 수 없습니다.", "", "앱을 다시 실행해 주세요.")
+        }
+
+        /**
+         * 성서 읽기 일정 JSON을 읽어오는 함수
+         */
+        private fun getBibleReadingSchedule(context: Context): JSONObject? {
+            return try {
+                val assetManager = context.assets
+                val inputStream: InputStream = assetManager.open("bible_reading_schedule.json")
+                val jsonStr = inputStream.bufferedReader().use { it.readText() }
+                JSONObject(jsonStr)
+            } catch (e: Exception) {
+                Log.e(TAG, "성서 읽기 일정 JSON 파싱 오류", e)
+                null
+            }
+        }
+
+        /**
+         * 특정 날짜의 성서 읽기 정보를 가져오는 함수
+         * @return Pair<일차, 읽기범위> 또는 null
+         */
+        private fun getBibleReadingForDate(context: Context, dateStr: String): Pair<Int, String>? {
+            val schedule = getBibleReadingSchedule(context) ?: return null
+            
+            try {
+                if (schedule.has(dateStr)) {
+                    val info = schedule.getJSONObject(dateStr)
+                    val day = info.getInt("day")
+                    val reading = info.getString("reading")
+                    return Pair(day, reading)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "날짜 $dateStr 의 성서 읽기 정보 파싱 오류", e)
+            }
+            
+            return null
         }
 
         /**
@@ -183,9 +220,10 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_body, android.text.Html.fromHtml(bodyWithItalic))
             views.setTextViewText(R.id.widget_date, dateLabel)
             
-            // 성서 읽기 범위 설정
-            val readingDay = "(4일차) "
-            val readingRangeText = "창세기 10:1-5; 역대기상 1:5-7; 창세기 10:6-20; 역대기상 1:8-16; 창세기 10:21-11:26; 역대기상 1:17-27"
+            // 성서 읽기 범위 설정 (날짜에 맞게 동적으로)
+            val bibleReading = getBibleReadingForDate(context, dateStr)
+            val readingDay = if (bibleReading != null) "(${bibleReading.first}일차) " else ""
+            val readingRangeText = bibleReading?.second ?: ""
             views.setTextViewText(R.id.widget_reading_day, readingDay)
             views.setTextViewText(R.id.widget_reading_content, readingRangeText)
             val prevIntent = Intent(context, DailyTextWidgetProvider::class.java).apply {

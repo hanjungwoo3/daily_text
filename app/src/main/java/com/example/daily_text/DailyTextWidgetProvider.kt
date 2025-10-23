@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.RemoteViews
 import org.json.JSONArray
 import java.io.InputStream
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -181,6 +182,12 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_title, titleLine)
             views.setTextViewText(R.id.widget_body, android.text.Html.fromHtml(bodyWithItalic))
             views.setTextViewText(R.id.widget_date, dateLabel)
+            
+            // 성서 읽기 범위 설정
+            val readingDay = "(4일차) "
+            val readingRangeText = "창세기 10:1-5; 역대기상 1:5-7; 창세기 10:6-20; 역대기상 1:8-16; 창세기 10:21-11:26; 역대기상 1:17-27"
+            views.setTextViewText(R.id.widget_reading_day, readingDay)
+            views.setTextViewText(R.id.widget_reading_content, readingRangeText)
             val prevIntent = Intent(context, DailyTextWidgetProvider::class.java).apply {
                 action = ACTION_PREV
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -215,6 +222,24 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 context, appWidgetId * 10 + 6, jwIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_title, jwPendingIntent)
+            
+            // (4일차) 클릭 시 구글 스프레드시트로 이동
+            val spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1kCUN3Jsh9b1Y1_rGfFsT7vVjj08atzdwfPuQxs08SnI"
+            val spreadsheetIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(spreadsheetUrl) }
+            val spreadsheetPendingIntent = PendingIntent.getActivity(
+                context, appWidgetId * 10 + 7, spreadsheetIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_reading_day, spreadsheetPendingIntent)
+            
+            // 성구 텍스트 클릭 시 JW.org 성구 검색으로 이동
+            val encodedReadingRange = URLEncoder.encode(readingRangeText, "UTF-8")
+            val readingRangeUrl = "https://wol.jw.org/ko/wol/l/r8/lp-ko?q=$encodedReadingRange"
+            val readingRangeIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(readingRangeUrl) }
+            val readingRangePendingIntent = PendingIntent.getActivity(
+                context, appWidgetId * 10 + 8, readingRangeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_reading_content, readingRangePendingIntent)
+            
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }

@@ -78,6 +78,37 @@
                 android:padding="8dp"
                 android:background="#4D388E3C" />
 
+            <!-- 성서 읽기 범위 (투명한 회색 배경) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_horizontal"
+                android:padding="6dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="4dp"
+                android:background="#4D808080">
+
+                <TextView
+                    android:id="@+id/widget_reading_day"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top"
+                    android:text="(4일차) "
+                    android:textSize="11sp"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/widget_reading_content"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="창세기 10:1-5; 역대기상 1:5-7..."
+                    android:textSize="11sp"
+                    android:textColor="@color/widget_text_secondary" />
+            </LinearLayout>
+
             <!-- 본문 -->
     <TextView
         android:id="@+id/widget_body"

@@ -3,4 +3,14 @@
     <string name="app_name">daily text 앱</string>
     <string name="widget_description">매일의 말씀과 해설을 보여주는 데일리 텍스트 위젯입니다.</string>
     <string name="widget_instruction">&lt;, &gt; 버튼으로 날짜를 이동하며 오늘의 말씀을 확인하세요!</string>
+    <string name="current_version">현재 버전: %s</string>
+    <string name="latest_version">최신 버전: %s</string>
+    <string name="checking_update">업데이트 확인 중...</string>
+    <string name="update_available">업데이트 가능</string>
+    <string name="up_to_date">최신 버전입니다</string>
+    <string name="update_button">업데이트</string>
+    <string name="downloading">다운로드 중...</string>
+    <string name="download_complete">다운로드 완료</string>
+    <string name="download_failed">다운로드 실패</string>
+    <string name="check_update_failed">업데이트 확인 실패</string>
 </resources> 

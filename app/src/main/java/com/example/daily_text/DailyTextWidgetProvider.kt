@@ -152,6 +152,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 }
             }
 
+            // 기존 알람 취소 (중복 방지)
             val intent = Intent(context, DateChangeBroadcastReceiver::class.java).apply {
                 action = ACTION_UPDATE_DAILY
             }
@@ -161,18 +162,29 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            alarmManager.cancel(pendingIntent)
 
             // 다음 자정 시간 계산
-            val calendar = Calendar.getInstance().apply {
-                add(Calendar.DAY_OF_MONTH, 1)
+            val now = Calendar.getInstance()
+            val nextMidnight = Calendar.getInstance().apply {
+                // 오늘 자정으로 설정
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
+
+                // 현재 시간이 이미 자정을 지났다면 내일 자정으로
+                if (timeInMillis <= now.timeInMillis) {
+                    add(Calendar.DAY_OF_MONTH, 1)
+                }
             }
 
-            val triggerTime = calendar.timeInMillis
-            Log.d(TAG, "Scheduling midnight update at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
+            val triggerTime = nextMidnight.timeInMillis
+            val currentTime = System.currentTimeMillis()
+            val hoursUntil = (triggerTime - currentTime) / (1000 * 60 * 60)
+
+            Log.d(TAG, "Current time: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(currentTime))}")
+            Log.d(TAG, "Scheduling midnight update at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))} (in $hoursUntil hours)")
 
             // Android 6.0 이상에서도 정확한 시간에 실행되도록 설정
             try {
@@ -202,23 +214,29 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            alarmManager.cancel(pendingIntent)
 
-            val calendar = Calendar.getInstance().apply {
-                add(Calendar.DAY_OF_MONTH, 1)
+            // 다음 자정 시간 계산
+            val now = Calendar.getInstance()
+            val nextMidnight = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
+
+                if (timeInMillis <= now.timeInMillis) {
+                    add(Calendar.DAY_OF_MONTH, 1)
+                }
             }
 
-            val triggerTime = calendar.timeInMillis
+            val triggerTime = nextMidnight.timeInMillis
             try {
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
                     pendingIntent
                 )
-                Log.d(TAG, "Inexact alarm scheduled as fallback")
+                Log.d(TAG, "Inexact alarm scheduled as fallback at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to schedule inexact alarm", e)
             }
@@ -250,14 +268,26 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         ) {
             val dateList = getDateList(context)
             val today = getTodayDate()
-            val savedDate = dateStrParam ?: getSavedDate(context, appWidgetId) ?: today
-            val currentIdx = dateList.indexOf(savedDate).takeIf { it >= 0 } ?: dateList.indexOf(today).takeIf { it >= 0 } ?: 0
-            val dateStr = dateList.getOrNull(currentIdx) ?: today
-            Log.d(TAG, "Updating widget $appWidgetId: today=$today, savedDate=$savedDate, dateStr=$dateStr")
-            saveDate(context, appWidgetId, dateStr)
-            val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, dateStr)
+            val savedDate = getSavedDate(context, appWidgetId)
+
+            // 날짜가 명시적으로 지정되지 않았고, 저장된 날짜가 오늘이 아니면 오늘로 자동 업데이트
+            val dateStr = when {
+                dateStrParam != null -> dateStrParam  // 명시적으로 지정된 날짜 사용
+                savedDate == null -> today  // 저장된 날짜가 없으면 오늘
+                savedDate != today -> {
+                    Log.d(TAG, "Date changed from $savedDate to $today - auto updating")
+                    today  // 날짜가 바뀌었으면 오늘로 자동 업데이트
+                }
+                else -> savedDate  // 저장된 날짜가 오늘이면 그대로 사용
+            }
+
+            val currentIdx = dateList.indexOf(dateStr).takeIf { it >= 0 } ?: dateList.indexOf(today).takeIf { it >= 0 } ?: 0
+            val finalDateStr = dateList.getOrNull(currentIdx) ?: today
+            Log.d(TAG, "Updating widget $appWidgetId: today=$today, savedDate=$savedDate, finalDate=$finalDateStr")
+            saveDate(context, appWidgetId, finalDateStr)
+            val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, finalDateStr)
             val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw
-            val dateLabel = getDateLabel(dateStr)
+            val dateLabel = getDateLabel(finalDateStr)
             val views = RemoteViews(context.packageName, R.layout.daily_text_widget)
             // body 내 (성구) 부분만 이탤릭+어두운 노랑(#FFB300) 처리
             val bodyWithItalic = verseBodyRaw.replace(Regex("\\([^\\)]+\\)")) {
@@ -268,7 +298,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_date, dateLabel)
             
             // 성서 읽기 범위 설정 (날짜에 맞게 동적으로)
-            val bibleReading = getBibleReadingForDate(context, dateStr)
+            val bibleReading = getBibleReadingForDate(context, finalDateStr)
             val readingDay = if (bibleReading != null) "(${bibleReading.first}일차) " else ""
             val readingRangeText = bibleReading?.second ?: ""
             views.setTextViewText(R.id.widget_reading_day, readingDay)
@@ -299,8 +329,8 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_date, todayPendingIntent)
             val calendar = Calendar.getInstance()
             val year = calendar.get(Calendar.YEAR)
-            val month = dateStr.substring(0,2).toInt()
-            val day = dateStr.substring(3,5).toInt()
+            val month = finalDateStr.substring(0,2).toInt()
+            val day = finalDateStr.substring(3,5).toInt()
             val linkUrl = "https://wol.jw.org/ko/wol/h/r8/lp-ko/$year/$month/$day"
             val jwIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(linkUrl) }
             val jwPendingIntent = PendingIntent.getActivity(

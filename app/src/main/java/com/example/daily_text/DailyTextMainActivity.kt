@@ -22,6 +22,7 @@ class DailyTextMainActivity : AppCompatActivity() {
 
     private lateinit var updateButton: Button
     private lateinit var versionText: TextView
+    private lateinit var testDateChangeButton: Button
 
     private val githubRepo = "hanjungwoo3/daily_text"
 
@@ -31,6 +32,7 @@ class DailyTextMainActivity : AppCompatActivity() {
 
         updateButton = findViewById(R.id.update_button)
         versionText = findViewById(R.id.version_text)
+        testDateChangeButton = findViewById(R.id.test_date_change_button)
 
         // 현재 버전 표시
         val currentVersion = packageManager.getPackageInfo(packageName, 0).versionName
@@ -39,6 +41,11 @@ class DailyTextMainActivity : AppCompatActivity() {
         // 업데이트 버튼 클릭 리스너 - 브라우저로 GitHub Release 페이지 열기
         updateButton.setOnClickListener {
             openGitHubReleasePage()
+        }
+
+        // 테스트 버튼: 날짜 변경 신호 보내기
+        testDateChangeButton.setOnClickListener {
+            sendDateChangeSignal()
         }
 
         // 알람 권한 체크 (Android 12 이상)
@@ -103,6 +110,27 @@ class DailyTextMainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "브라우저 열기 실패", e)
             Toast.makeText(this, "브라우저를 열 수 없습니다", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * 테스트 함수: 날짜 변경 신호를 수동으로 전송하여 위젯 업데이트 테스트
+     */
+    private fun sendDateChangeSignal() {
+        try {
+            Log.d(TAG, "Sending date change signal for testing...")
+
+            // DateChangeBroadcastReceiver에 ACTION_UPDATE_DAILY 브로드캐스트 전송
+            val intent = Intent(this, DateChangeBroadcastReceiver::class.java).apply {
+                action = "com.example.daily_text.ACTION_UPDATE_DAILY"
+            }
+            sendBroadcast(intent)
+
+            Log.d(TAG, "Date change signal sent successfully")
+            Toast.makeText(this, "날짜 변경 신호 전송됨 - 위젯이 업데이트됩니다", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send date change signal", e)
+            Toast.makeText(this, "신호 전송 실패: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 }

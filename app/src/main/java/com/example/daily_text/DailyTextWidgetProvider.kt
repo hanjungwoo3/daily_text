@@ -141,6 +141,17 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 return
             }
 
+            // Android 12(API 31) 이상에서는 정확한 알람 권한 체크
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                if (!alarmManager.canScheduleExactAlarms()) {
+                    Log.e(TAG, "Cannot schedule exact alarms - permission not granted")
+                    Log.e(TAG, "User needs to enable 'Alarms & reminders' permission in app settings")
+                    // 권한이 없어도 일반 알람으로 fallback 시도
+                    scheduleInexactAlarm(context, alarmManager)
+                    return
+                }
+            }
+
             val intent = Intent(context, DateChangeBroadcastReceiver::class.java).apply {
                 action = ACTION_UPDATE_DAILY
             }
@@ -170,10 +181,46 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                     triggerTime,
                     pendingIntent
                 )
+                Log.d(TAG, "Exact alarm scheduled successfully")
             } catch (e: SecurityException) {
-                Log.e(TAG, "Failed to schedule exact alarm", e)
+                Log.e(TAG, "Failed to schedule exact alarm - SecurityException", e)
                 // 정확한 알람 설정 실패 시 일반 알람으로 fallback
-                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                scheduleInexactAlarm(context, alarmManager)
+            }
+        }
+
+        /**
+         * 정확한 알람 권한이 없을 때 대체 알람 설정
+         */
+        private fun scheduleInexactAlarm(context: Context, alarmManager: AlarmManager) {
+            val intent = Intent(context, DateChangeBroadcastReceiver::class.java).apply {
+                action = ACTION_UPDATE_DAILY
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val calendar = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            val triggerTime = calendar.timeInMillis
+            try {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+                Log.d(TAG, "Inexact alarm scheduled as fallback")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to schedule inexact alarm", e)
             }
         }
 

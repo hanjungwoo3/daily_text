@@ -22,6 +22,12 @@
             </intent-filter>
         </activity>
 
+        <!-- URL 처리를 위한 중간 Activity -->
+        <activity
+            android:name=".UrlHandlerActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- 위젯 등록 -->
         <receiver
             android:name=".DailyTextWidgetProvider"
@@ -33,6 +39,12 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/clock_widget_info" />
         </receiver>
+
+        <!-- ListView 위젯을 위한 RemoteViewsService -->
+        <service
+            android:name=".DailyTextWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
 
         <!-- 날짜 변경 및 부팅 감지 리시버 -->
         <receiver

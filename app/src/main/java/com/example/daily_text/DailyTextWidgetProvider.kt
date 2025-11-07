@@ -285,24 +285,14 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             val finalDateStr = dateList.getOrNull(currentIdx) ?: today
             Log.d(TAG, "Updating widget $appWidgetId: today=$today, savedDate=$savedDate, finalDate=$finalDateStr")
             saveDate(context, appWidgetId, finalDateStr)
-            val (verseTitleRaw, verseReference, verseBodyRaw) = getVerseForDate(context, finalDateStr)
-            val titleLine = if (verseReference.isNotBlank()) "$verseTitleRaw $verseReference" else verseTitleRaw
+
             val dateLabel = getDateLabel(finalDateStr)
-            val views = RemoteViews(context.packageName, R.layout.daily_text_widget)
-            // body 내 (성구) 부분만 이탤릭+어두운 노랑(#FFB300) 처리
-            val bodyWithItalic = verseBodyRaw.replace(Regex("\\([^\\)]+\\)")) {
-                "<i><font color=\"#FFB300\">${it.value}</font></i>"
-            }
-            views.setTextViewText(R.id.widget_title, titleLine)
-            views.setTextViewText(R.id.widget_body, android.text.Html.fromHtml(bodyWithItalic))
+            val views = RemoteViews(context.packageName, R.layout.daily_text_widget_listview)
+
+            // 날짜 표시
             views.setTextViewText(R.id.widget_date, dateLabel)
-            
-            // 성서 읽기 범위 설정 (날짜에 맞게 동적으로)
-            val bibleReading = getBibleReadingForDate(context, finalDateStr)
-            val readingDay = if (bibleReading != null) "(${bibleReading.first}일차) " else ""
-            val readingRangeText = bibleReading?.second ?: ""
-            views.setTextViewText(R.id.widget_reading_day, readingDay)
-            views.setTextViewText(R.id.widget_reading_content, readingRangeText)
+
+            // 이전/다음/오늘 버튼 설정
             val prevIntent = Intent(context, DailyTextWidgetProvider::class.java).apply {
                 action = ACTION_PREV
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -311,6 +301,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 context, appWidgetId * 10 + 1, prevIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_prev_btn, prevPendingIntent)
+
             val nextIntent = Intent(context, DailyTextWidgetProvider::class.java).apply {
                 action = ACTION_NEXT
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -319,6 +310,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 context, appWidgetId * 10 + 2, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_next_btn, nextPendingIntent)
+
             val todayIntent = Intent(context, DailyTextWidgetProvider::class.java).apply {
                 action = ACTION_TODAY
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -327,35 +319,27 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 context, appWidgetId * 10 + 5, todayIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_date, todayPendingIntent)
-            val calendar = Calendar.getInstance()
-            val year = calendar.get(Calendar.YEAR)
-            val month = finalDateStr.substring(0,2).toInt()
-            val day = finalDateStr.substring(3,5).toInt()
-            val linkUrl = "https://wol.jw.org/ko/wol/h/r8/lp-ko/$year/$month/$day"
-            val jwIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(linkUrl) }
-            val jwPendingIntent = PendingIntent.getActivity(
-                context, appWidgetId * 10 + 6, jwIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+            // ListView 설정
+            val serviceIntent = Intent(context, DailyTextWidgetService::class.java).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                data = android.net.Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
+            }
+            views.setRemoteAdapter(R.id.widget_listview, serviceIntent)
+
+            // ListView 아이템 클릭을 위한 템플릿 PendingIntent
+            // UrlHandlerActivity를 사용하여 explicit intent로 만듭니다
+            val clickIntentTemplate = Intent(context, UrlHandlerActivity::class.java)
+            val clickPendingIntentTemplate = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                clickIntentTemplate,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_title, jwPendingIntent)
-            
-            // (4일차) 클릭 시 구글 스프레드시트로 이동
-            val spreadsheetUrl = "https://docs.google.com/spreadsheets/d/1kCUN3Jsh9b1Y1_rGfFsT7vVjj08atzdwfPuQxs08SnI"
-            val spreadsheetIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(spreadsheetUrl) }
-            val spreadsheetPendingIntent = PendingIntent.getActivity(
-                context, appWidgetId * 10 + 7, spreadsheetIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_reading_day, spreadsheetPendingIntent)
-            
-            // 성구 텍스트 클릭 시 JW.org 성구 검색으로 이동
-            val encodedReadingRange = URLEncoder.encode(readingRangeText, "UTF-8")
-            val readingRangeUrl = "https://wol.jw.org/ko/wol/l/r8/lp-ko?q=$encodedReadingRange"
-            val readingRangeIntent = Intent(Intent.ACTION_VIEW).apply { data = android.net.Uri.parse(readingRangeUrl) }
-            val readingRangePendingIntent = PendingIntent.getActivity(
-                context, appWidgetId * 10 + 8, readingRangeIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_reading_content, readingRangePendingIntent)
-            
+            views.setPendingIntentTemplate(R.id.widget_listview, clickPendingIntentTemplate)
+
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_listview)
         }
     }
 

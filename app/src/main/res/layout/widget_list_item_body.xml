@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 본문 항목 레이아웃 (클릭 불가능) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:layout_marginTop="2dp"
+    android:layout_marginBottom="4dp">
+
+    <TextView
+        android:id="@+id/widget_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="오늘의 해설"
+        android:textSize="13sp"
+        android:textColor="@color/widget_text_secondary"
+        android:gravity="top" />
+</LinearLayout>

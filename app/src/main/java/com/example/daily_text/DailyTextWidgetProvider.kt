@@ -274,11 +274,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             val dateStr = when {
                 dateStrParam != null -> dateStrParam  // 명시적으로 지정된 날짜 사용
                 savedDate == null -> today  // 저장된 날짜가 없으면 오늘
-                savedDate != today -> {
-                    Log.d(TAG, "Date changed from $savedDate to $today - auto updating")
-                    today  // 날짜가 바뀌었으면 오늘로 자동 업데이트
-                }
-                else -> savedDate  // 저장된 날짜가 오늘이면 그대로 사용
+                else -> savedDate  // 저장된 날짜가 있으면 그대로 사용
             }
 
             val currentIdx = dateList.indexOf(dateStr).takeIf { it >= 0 } ?: dateList.indexOf(today).takeIf { it >= 0 } ?: 0

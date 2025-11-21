@@ -30,6 +30,10 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         private const val ACTION_UPDATE_DAILY = "com.example.daily_text.ACTION_UPDATE_DAILY"
         private const val TAG = "DailyTextWidget"
 
+        // 테스트 모드: true로 설정하면 1분 후에 알람이 발생합니다
+        private const val TEST_MODE = false
+        private const val TEST_ALARM_MINUTES = 1
+
         private fun getSavedDate(context: Context, appWidgetId: Int): String? {
             val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, 0)
             return prefs.getString(PREF_PREFIX_KEY + appWidgetId, null)
@@ -135,21 +139,11 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
          * 다음 자정에 위젯을 업데이트하도록 알람 설정
          */
         fun scheduleMidnightUpdate(context: Context) {
+            Log.d(TAG, "========== scheduleMidnightUpdate called ==========")
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             if (alarmManager == null) {
                 Log.e(TAG, "AlarmManager not available")
                 return
-            }
-
-            // Android 12(API 31) 이상에서는 정확한 알람 권한 체크
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                if (!alarmManager.canScheduleExactAlarms()) {
-                    Log.e(TAG, "Cannot schedule exact alarms - permission not granted")
-                    Log.e(TAG, "User needs to enable 'Alarms & reminders' permission in app settings")
-                    // 권한이 없어도 일반 알람으로 fallback 시도
-                    scheduleInexactAlarm(context, alarmManager)
-                    return
-                }
             }
 
             // 기존 알람 취소 (중복 방지)
@@ -163,28 +157,51 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             alarmManager.cancel(pendingIntent)
+            Log.d(TAG, "Previous alarm cancelled")
 
-            // 다음 자정 시간 계산
+            // 다음 자정 시간 계산 (테스트 모드일 경우 1분 후)
             val now = Calendar.getInstance()
-            val nextMidnight = Calendar.getInstance().apply {
-                // 오늘 자정으로 설정
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
+            val nextAlarmTime = if (TEST_MODE) {
+                Log.w(TAG, "⚠️  TEST MODE ENABLED - Alarm will trigger in $TEST_ALARM_MINUTES minute(s) instead of midnight")
+                Calendar.getInstance().apply {
+                    add(Calendar.MINUTE, TEST_ALARM_MINUTES)
+                }
+            } else {
+                Calendar.getInstance().apply {
+                    // 오늘 자정으로 설정
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
 
-                // 현재 시간이 이미 자정을 지났다면 내일 자정으로
-                if (timeInMillis <= now.timeInMillis) {
-                    add(Calendar.DAY_OF_MONTH, 1)
+                    // 현재 시간이 이미 자정을 지났다면 내일 자정으로
+                    if (timeInMillis <= now.timeInMillis) {
+                        add(Calendar.DAY_OF_MONTH, 1)
+                    }
                 }
             }
 
-            val triggerTime = nextMidnight.timeInMillis
+            val triggerTime = nextAlarmTime.timeInMillis
             val currentTime = System.currentTimeMillis()
             val hoursUntil = (triggerTime - currentTime) / (1000 * 60 * 60)
+            val minutesUntil = (triggerTime - currentTime) / (1000 * 60)
 
             Log.d(TAG, "Current time: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(currentTime))}")
-            Log.d(TAG, "Scheduling midnight update at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))} (in $hoursUntil hours)")
+            Log.d(TAG, "Next midnight: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
+            Log.d(TAG, "Time until alarm: $hoursUntil hours ($minutesUntil minutes)")
+
+            // Android 12(API 31) 이상에서는 정확한 알람 권한 체크
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                val canScheduleExact = alarmManager.canScheduleExactAlarms()
+                Log.d(TAG, "Can schedule exact alarms: $canScheduleExact")
+                if (!canScheduleExact) {
+                    Log.w(TAG, "Cannot schedule exact alarms - permission not granted")
+                    Log.w(TAG, "User needs to enable 'Alarms & reminders' permission in app settings")
+                    // 권한이 없어도 일반 알람으로 fallback 시도
+                    scheduleInexactAlarm(context, alarmManager)
+                    return
+                }
+            }
 
             // Android 6.0 이상에서도 정확한 시간에 실행되도록 설정
             try {
@@ -193,12 +210,17 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                     triggerTime,
                     pendingIntent
                 )
-                Log.d(TAG, "Exact alarm scheduled successfully")
+                Log.d(TAG, "✓ Exact alarm scheduled successfully using setExactAndAllowWhileIdle")
+                Log.d(TAG, "✓ Alarm will trigger at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
             } catch (e: SecurityException) {
-                Log.e(TAG, "Failed to schedule exact alarm - SecurityException", e)
+                Log.e(TAG, "✗ Failed to schedule exact alarm - SecurityException", e)
                 // 정확한 알람 설정 실패 시 일반 알람으로 fallback
                 scheduleInexactAlarm(context, alarmManager)
+            } catch (e: Exception) {
+                Log.e(TAG, "✗ Failed to schedule exact alarm - Unexpected error", e)
+                scheduleInexactAlarm(context, alarmManager)
             }
+            Log.d(TAG, "========== scheduleMidnightUpdate completed ==========")
         }
 
         /**
@@ -344,13 +366,14 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        Log.d(TAG, "onUpdate called for ${appWidgetIds.size} widget(s)")
         // 각 위젯 인스턴스를 업데이트
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
-        
-        // 자정 업데이트 알람 설정
-        scheduleMidnightUpdate(context)
+
+        // 자정 업데이트 알람은 onEnabled에서만 설정
+        // onUpdate는 주기적으로 호출될 수 있으므로 여기서는 설정하지 않음
     }
 
     override fun onEnabled(context: Context) {

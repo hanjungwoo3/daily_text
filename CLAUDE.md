@@ -26,6 +26,55 @@ adb install -r app/build/outputs/apk/debug/daily_text.apk
 ./gradlew connectedAndroidTest  # Run instrumentation tests on connected device
 ```
 
+## Android Emulator Setup
+
+### Emulator Location & Commands
+```bash
+# Emulator executable location
+~/Library/Android/sdk/emulator/emulator
+
+# List available AVDs
+~/Library/Android/sdk/emulator/emulator -list-avds
+
+# Start emulator (run in background)
+~/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_36 &
+
+# Check connected devices (emulator shows as emulator-5554)
+adb devices
+```
+
+### Available Emulators
+- **Medium_Phone_API_36**: Main test emulator (API 36, production build - no root access)
+
+### Installing APK to Emulator
+```bash
+# Install to specific emulator
+adb -s emulator-5554 install -r app/build/outputs/apk/debug/daily_text-debug.apk
+
+# View logs from emulator
+adb -s emulator-5554 logcat | grep -E "DailyTextWidget|DateChangeReceiver"
+
+# Clear logs
+adb -s emulator-5554 logcat -c
+```
+
+### Testing Widget Updates
+```bash
+# Manually trigger midnight update broadcast (for testing)
+adb -s emulator-5554 shell am broadcast -n com.example.daily_text/.DateChangeBroadcastReceiver -a com.example.daily_text.ACTION_UPDATE_DAILY
+
+# Note: Must use explicit broadcast (-n flag) as implicit broadcasts don't work on Android 8.0+
+```
+
+### Test Mode for Alarm Testing
+To test midnight alarms without waiting until midnight:
+1. Set `TEST_MODE = true` in DailyTextWidgetProvider.kt companion object
+2. Set `TEST_ALARM_MINUTES = 1` for 1-minute test alarms
+3. Build and install APK
+4. Add widget or trigger broadcast to schedule alarm
+5. Wait 1 minute to see alarm trigger
+6. **IMPORTANT**: Set `TEST_MODE = false` before production release
+
 ## Key Architecture
 
 ### Widget System

@@ -3,6 +3,7 @@ package com.example.daily_text
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -50,6 +51,9 @@ class DailyTextMainActivity : AppCompatActivity() {
 
         // 알람 권한 체크 (Android 12 이상)
         checkAndRequestAlarmPermission()
+        
+        // 배터리 최적화 체크
+        checkAndRequestBatteryOptimization()
     }
 
     override fun onResume() {
@@ -63,6 +67,12 @@ class DailyTextMainActivity : AppCompatActivity() {
                 Log.d(TAG, "Alarm permission granted, rescheduling midnight update")
             }
         }
+        
+        // 배터리 최적화 상태 재확인
+        val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        if (powerManager?.isIgnoringBatteryOptimizations(packageName) == true) {
+            Log.d(TAG, "Battery optimization disabled, widget will work properly")
+        }
     }
 
     private fun checkAndRequestAlarmPermission() {
@@ -72,6 +82,42 @@ class DailyTextMainActivity : AppCompatActivity() {
             if (alarmManager?.canScheduleExactAlarms() == false) {
                 showAlarmPermissionDialog()
             }
+        }
+    }
+
+    private fun checkAndRequestBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            if (powerManager?.isIgnoringBatteryOptimizations(packageName) == false) {
+                showBatteryOptimizationDialog()
+            }
+        }
+    }
+
+    private fun showBatteryOptimizationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("배터리 최적화 해제 필요")
+            .setMessage("위젯이 매일 0시에 정확히 업데이트되려면 배터리 최적화를 해제해야 합니다.\n\n" +
+                    "배터리 최적화가 활성화되어 있으면 알람이 지연되거나 작동하지 않을 수 있습니다.\n\n" +
+                    "설정에서 이 앱의 배터리 최적화를 해제해주세요.")
+            .setPositiveButton("설정으로 이동") { _, _ ->
+                openBatteryOptimizationSettings()
+            }
+            .setNegativeButton("나중에", null)
+            .show()
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open battery optimization settings", e)
+            Toast.makeText(this, "설정 화면을 열 수 없습니다", Toast.LENGTH_SHORT).show()
         }
     }
 

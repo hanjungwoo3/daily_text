@@ -112,6 +112,18 @@ The app is centered around an Android home screen widget (`DailyTextWidgetProvid
 - `scheduleMidnightUpdate()` checks `canScheduleExactAlarms()` and falls back to inexact alarms if permission denied
 - Alarm is set at next midnight (00:00:00) using `setExactAndAllowWhileIdle()`
 
+### WakeLock & Battery Optimization (v1.13.0+)
+- **WakeLock**: `DateChangeBroadcastReceiver` acquires `PARTIAL_WAKE_LOCK` to ensure widget updates complete even when screen is off
+  - 60-second timeout to prevent battery drain
+  - Automatically released after update completes
+- **Battery Optimization**: App requests battery optimization exemption to ensure midnight alarms trigger reliably
+  - Users are prompted on first launch to disable battery optimization
+  - Can be checked via "알람 상태 확인" button in main activity
+- **Required Permissions**: 
+  - `WAKE_LOCK`: Allows keeping CPU awake during widget updates
+  - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`: Allows requesting battery optimization exemption
+
+
 ## Widget Interactions
 - **Date label click**: Returns to today's date
 - **Title click**: Opens jw.org daily text page for current date

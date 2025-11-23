@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.util.Log
 
 /**
@@ -14,6 +15,7 @@ class DateChangeBroadcastReceiver : BroadcastReceiver() {
     
     companion object {
         private const val TAG = "DateChangeReceiver"
+        private const val WAKELOCK_TIMEOUT = 60000L // 60초
     }
     
     override fun onReceive(context: Context, intent: Intent) {
@@ -23,23 +25,42 @@ class DateChangeBroadcastReceiver : BroadcastReceiver() {
         Log.d(TAG, "Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}")
         Log.d(TAG, "======================================")
 
-        when (action) {
-            Intent.ACTION_DATE_CHANGED,
-            Intent.ACTION_TIME_CHANGED,
-            Intent.ACTION_TIMEZONE_CHANGED,
-            Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_MY_PACKAGE_REPLACED,
-            "com.example.daily_text.ACTION_UPDATE_DAILY" -> {
-                // 모든 위젯 인스턴스 업데이트
-                updateAllWidgets(context)
+        // WakeLock 획득 - 화면이 꺼져 있어도 작업이 완료되도록 보장
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "DailyText::DateChangeWakeLock"
+        )
+        
+        try {
+            // WakeLock 획득 (최대 60초)
+            wakeLock.acquire(WAKELOCK_TIMEOUT)
+            Log.d(TAG, "WakeLock acquired")
 
-                // 다음 자정 알람 설정 (BOOT_COMPLETED나 업데이트 후에만)
-                if (action == Intent.ACTION_BOOT_COMPLETED ||
-                    action == Intent.ACTION_MY_PACKAGE_REPLACED ||
-                    action == "com.example.daily_text.ACTION_UPDATE_DAILY") {
-                    Log.d(TAG, "Rescheduling midnight alarm")
-                    DailyTextWidgetProvider.scheduleMidnightUpdate(context)
+            when (action) {
+                Intent.ACTION_DATE_CHANGED,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED,
+                Intent.ACTION_BOOT_COMPLETED,
+                Intent.ACTION_MY_PACKAGE_REPLACED,
+                "com.example.daily_text.ACTION_UPDATE_DAILY" -> {
+                    // 모든 위젯 인스턴스 업데이트
+                    updateAllWidgets(context)
+
+                    // 다음 자정 알람 설정 (BOOT_COMPLETED나 업데이트 후에만)
+                    if (action == Intent.ACTION_BOOT_COMPLETED ||
+                        action == Intent.ACTION_MY_PACKAGE_REPLACED ||
+                        action == "com.example.daily_text.ACTION_UPDATE_DAILY") {
+                        Log.d(TAG, "Rescheduling midnight alarm after action: $action")
+                        DailyTextWidgetProvider.scheduleMidnightUpdate(context)
+                    }
                 }
+            }
+        } finally {
+            // WakeLock 해제
+            if (wakeLock.isHeld) {
+                wakeLock.release()
+                Log.d(TAG, "WakeLock released")
             }
         }
     }

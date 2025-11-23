@@ -24,6 +24,7 @@ class DailyTextMainActivity : AppCompatActivity() {
     private lateinit var updateButton: Button
     private lateinit var versionText: TextView
     private lateinit var testDateChangeButton: Button
+    private lateinit var checkAlarmButton: Button
 
     private val githubRepo = "hanjungwoo3/daily_text"
 
@@ -34,6 +35,7 @@ class DailyTextMainActivity : AppCompatActivity() {
         updateButton = findViewById(R.id.update_button)
         versionText = findViewById(R.id.version_text)
         testDateChangeButton = findViewById(R.id.test_date_change_button)
+        checkAlarmButton = findViewById(R.id.check_alarm_button)
 
         // 현재 버전 표시
         val currentVersion = packageManager.getPackageInfo(packageName, 0).versionName
@@ -48,6 +50,11 @@ class DailyTextMainActivity : AppCompatActivity() {
         testDateChangeButton.setOnClickListener {
             sendDateChangeSignal()
         }
+        
+        // 알람 상태 확인 버튼
+        checkAlarmButton.setOnClickListener {
+            checkAlarmStatus()
+        }
 
         // 알람 권한 체크 (Android 12 이상)
         checkAndRequestAlarmPermission()
@@ -55,6 +62,7 @@ class DailyTextMainActivity : AppCompatActivity() {
         // 배터리 최적화 체크
         checkAndRequestBatteryOptimization()
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -179,4 +187,66 @@ class DailyTextMainActivity : AppCompatActivity() {
             Toast.makeText(this, "신호 전송 실패: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+    
+    /**
+     * 알람 상태 확인 및 재설정
+     */
+    private fun checkAlarmStatus() {
+        val sb = StringBuilder()
+        sb.append("=== 위젯 알람 상태 ===\n\n")
+        
+        // 1. 배터리 최적화 상태
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            val isIgnoringBatteryOptimizations = powerManager?.isIgnoringBatteryOptimizations(packageName) ?: false
+            sb.append("배터리 최적화: ")
+            if (isIgnoringBatteryOptimizations) {
+                sb.append("✓ 해제됨 (정상)\n")
+            } else {
+                sb.append("✗ 활성화됨 (문제 가능성)\n")
+            }
+        }
+        
+        // 2. 알람 권한 상태
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            val canScheduleExact = alarmManager?.canScheduleExactAlarms() ?: false
+            sb.append("정확한 알람 권한: ")
+            if (canScheduleExact) {
+                sb.append("✓ 허용됨 (정상)\n")
+            } else {
+                sb.append("✗ 거부됨 (문제)\n")
+            }
+        }
+        
+        // 3. 다음 자정까지 시간
+        val now = java.util.Calendar.getInstance()
+        val nextMidnight = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+            if (timeInMillis <= now.timeInMillis) {
+                add(java.util.Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+        val hoursUntil = (nextMidnight.timeInMillis - now.timeInMillis) / (1000 * 60 * 60)
+        val minutesUntil = ((nextMidnight.timeInMillis - now.timeInMillis) / (1000 * 60)) % 60
+        sb.append("\n다음 자정까지: ${hoursUntil}시간 ${minutesUntil}분\n")
+        sb.append("다음 업데이트: ${java.text.SimpleDateFormat("MM월 dd일 HH:mm", java.util.Locale.KOREAN).format(nextMidnight.time)}\n")
+        
+        sb.append("\n알람을 다시 설정하시겠습니까?")
+        
+        AlertDialog.Builder(this)
+            .setTitle("알람 상태 확인")
+            .setMessage(sb.toString())
+            .setPositiveButton("알람 재설정") { _, _ ->
+                DailyTextWidgetProvider.scheduleMidnightUpdate(this)
+                Toast.makeText(this, "자정 알람이 재설정되었습니다", Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "Midnight alarm manually rescheduled")
+            }
+            .setNegativeButton("닫기", null)
+            .show()
+    }
 }
+

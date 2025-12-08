@@ -48,12 +48,11 @@ class DateChangeBroadcastReceiver : BroadcastReceiver() {
                     updateAllWidgets(context)
 
                     // 다음 자정 알람 설정 (BOOT_COMPLETED나 업데이트 후에만)
-                    if (action == Intent.ACTION_BOOT_COMPLETED ||
-                        action == Intent.ACTION_MY_PACKAGE_REPLACED ||
-                        action == "com.example.daily_text.ACTION_UPDATE_DAILY") {
-                        Log.d(TAG, "Rescheduling midnight alarm after action: $action")
-                        DailyTextWidgetProvider.scheduleMidnightUpdate(context)
-                    }
+                    // 다음 자정 알람 설정
+                    // BOOT_COMPLETED, PACKAGE_REPLACED, UPDATE_DAILY 뿐만 아니라
+                    // 시간/시간대 변경 시에도 알람을 재설정해야 함 (특히 해외 여행 시)
+                    Log.d(TAG, "Rescheduling midnight alarm after action: $action")
+                    DailyTextWidgetProvider.scheduleMidnightUpdate(context)
                 }
             }
         } finally {
@@ -71,9 +70,10 @@ class DateChangeBroadcastReceiver : BroadcastReceiver() {
         val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
 
         // 오늘 날짜 계산
-        val calendar = android.icu.util.Calendar.getInstance()
-        val month = calendar.get(android.icu.util.Calendar.MONTH) + 1
-        val day = calendar.get(android.icu.util.Calendar.DAY_OF_MONTH)
+        // 오늘 날짜 계산
+        val calendar = java.util.Calendar.getInstance()
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
         val todayDate = String.format("%02d-%02d", month, day)
 
         Log.d(TAG, "Updating ${appWidgetIds.size} widget(s) to date: $todayDate")

@@ -171,7 +171,7 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
                     // 오늘 자정으로 설정
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
+                    set(Calendar.SECOND, 10) // 자정 10초 후에 실행되도록 하여 날짜 변경 시점의 모호함 방지
                     set(Calendar.MILLISECOND, 0)
 
                     // 현재 시간이 이미 자정을 지났다면 내일 자정으로

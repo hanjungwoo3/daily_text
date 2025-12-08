@@ -55,4 +55,5 @@ sg-dist-ec/
 dev-qa-dist/
 playwright-mcp-docker/
 
-app/build/ 
+app/build/
+build/

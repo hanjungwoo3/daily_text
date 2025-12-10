@@ -204,13 +204,15 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             }
 
             // Android 6.0 이상에서도 정확한 시간에 실행되도록 설정
+            // setAlarmClock()은 배터리 최적화를 우회하여 가장 확실하게 작동함
             try {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
+                // 알람 시계 info 생성 (알람 아이콘이 상태바에 표시됨)
+                val alarmClockInfo = AlarmManager.AlarmClockInfo(
                     triggerTime,
-                    pendingIntent
+                    pendingIntent  // 알람 아이콘 클릭 시 실행될 PendingIntent (같은 것 사용)
                 )
-                Log.d(TAG, "✓ Exact alarm scheduled successfully using setExactAndAllowWhileIdle")
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+                Log.d(TAG, "✓ AlarmClock scheduled successfully using setAlarmClock")
                 Log.d(TAG, "✓ Alarm will trigger at: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(triggerTime))}")
             } catch (e: SecurityException) {
                 Log.e(TAG, "✗ Failed to schedule exact alarm - SecurityException", e)

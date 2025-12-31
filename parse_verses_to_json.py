@@ -5,7 +5,7 @@ import zipfile
 import os
 
 # 압축파일명과 출력 파일 경로
-ZIP_FILE = 'es25_KO.txt.zip'  # 필요시 변경
+ZIP_FILE = 'es26_KO.txt.zip'  # 필요시 변경
 OUTPUT_FILE = 'app/src/main/assets/daily_verses.json'  # 연도와 무관하게 사용
 
 # 압축 해제
@@ -13,7 +13,7 @@ with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
     zip_ref.extractall('.')
 
 # 압축에서 추출된 txt 파일 목록
-INPUT_FILES = sorted(glob.glob('es25_KO_*.txt'))
+INPUT_FILES = sorted(glob.glob('es26_KO_*.txt'))
 
 # 날짜 패턴 (예: 6월 3일 화요일)
 date_pattern = re.compile(r'([1-9]|1[0-2])월 ([1-9]|[12][0-9]|3[01])일 [일월화수목금토]요일')

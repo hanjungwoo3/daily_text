@@ -358,7 +358,15 @@ class DailyTextWidgetProvider : AppWidgetProvider() {
             )
             views.setPendingIntentTemplate(R.id.widget_listview, clickPendingIntentTemplate)
 
+            // 1. partiallyUpdateAppWidget으로 먼저 강제 업데이트 (런처 캐시 무효화)
+            val partialViews = RemoteViews(context.packageName, R.layout.daily_text_widget_listview)
+            partialViews.setTextViewText(R.id.widget_date, dateLabel)
+            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, partialViews)
+
+            // 2. 전체 위젯 업데이트
             appWidgetManager.updateAppWidget(appWidgetId, views)
+
+            // 3. ListView 데이터 갱신
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_listview)
         }
     }

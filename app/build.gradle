@@ -11,8 +11,8 @@ android {
         applicationId "com.example.daily_text"
         minSdk 21
         targetSdk 34
-        versionCode 14
-        versionName "1.15.0"
+        versionCode 16
+        versionName "1.17.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

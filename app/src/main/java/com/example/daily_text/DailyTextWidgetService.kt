@@ -43,7 +43,7 @@ class DailyTextRemoteViewsFactory(
     private var readingDay: String = ""
     private var readingContent: String = ""
     private var jwUrl: String = ""
-    private var spreadsheetUrl: String = "https://docs.google.com/spreadsheets/d/1kCUN3Jsh9b1Y1_rGfFsT7vVjj08atzdwfPuQxs08SnI"
+    private var spreadsheetUrl: String = "https://docs.google.com/spreadsheets/d/147Jr6U_vzzQmbtPYnDUhZQdoHZRaMPOsK56gTelodE0/edit?gid=626588040#gid=626588040"
     private var readingRangeUrl: String = ""
 
     companion object {
